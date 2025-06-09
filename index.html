@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#f78c40">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#10b981">
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Step Registration Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+    import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
+    
+    // Initialize Firebase (you'll need to replace with your config)
+    const firebaseConfig = {
+    apiKey: "AIzaSyB2FwrqvJiww4rMkWn1p_4PZFj__oDuuE0",
+    authDomain: "learning-circle-c0339.firebaseapp.com",
+    projectId: "learning-circle-c0339",
+    storageBucket: "learning-circle-c0339.firebasestorage.app",
+    messagingSenderId: "286582446772",
+    appId: "1:286582446772:web:e1986eacc1c9eed6a895e1"
+  };
+
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    window.saveToFirebase = async function(data) {
+      try {
+        const docRef = await addDoc(collection(db, "registrations"), data);
+        console.log("Document written with ID: ", docRef.id);
+        return true;
+      } catch (error) {
+        console.error("Error adding document: ", error);
+        return false;
+      }
+    };
+  </script>
+  
+  <style>
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+    }
+
+    .checkbox-custom {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-custom:checked {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .checkbox-custom:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .dropdown-custom {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.5rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+    }
+
+    /* Custom responsive progress indicator */
+    .progress-container {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0.5rem 0;
+    }
+
+    .progress-step {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .progress-circle {
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-weight: 600;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .progress-line {
+      width: 2rem;
+      height: 2px;
+      margin: 0 0.5rem;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 640px) {
+      .progress-circle {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.75rem;
+      }
+
+      .progress-line {
+        width: 2rem;
+        margin: 0 0.25rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .progress-container {
+        justify-content: flex-start;
+        padding-bottom: 1rem;
+      }
+
+      .progress-line {
+        width: 2rem;
+      }
+    }
+
+    input {
+      height: 40px;
+    }
+
+    select {
+      height: 40px;
+    }
+
+    .learning-circle-item {
+      transition: all 0.2s ease;
+    }
+
+    .learning-circle-item.selected {
+      background-color: #ecfdf5;
+      border-color: #10b981;
+      border-width: 2px;
+    }
+
+    .whatsapp-link {
+      background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 8px 0;
+      text-decoration: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: transform 0.2s ease;
+    }
+
+    .whatsapp-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+    }
+
+    .whatsapp-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+
+      <!-- Progress Steps -->
+      <div class="progress-container">
+        <div class="progress-step">
+          <div id="tab1" class="progress-circle bg-emerald-500 text-white">1</div>
+          <div class="progress-line bg-emerald-500"></div>
+        </div>
+        <div class="progress-step">
+          <div id="tab2" class="progress-circle bg-gray-200 text-gray-500">2</div>
+          <div class="progress-line bg-gray-200"></div>
+        </div>
+        <div class="progress-step">
+          <div id="tab3" class="progress-circle bg-gray-200 text-gray-500">3</div>
+          <div class="progress-line bg-gray-200"></div>
+        </div>
+        <div class="progress-step">
+          <div id="tab4" class="progress-circle bg-gray-200 text-gray-500">4</div>
+          <div class="progress-line bg-gray-200"></div>
+        </div>
+        <div class="progress-step">
+          <div id="tab5" class="progress-circle bg-gray-200 text-gray-500">5</div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step active" id="step1">
+        <h2 class=" text-gray-800 mb-6"><span class="text-[#f78c40] font-bold text-xl ">µLearn AJCE</span>
+          <p class="text-s"> Learning Circle Registration</p>
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Full Name</label>
+            <input type="text" id="fullName"
+              class="w-full h-[40px] border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your full name">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Phone Number</label>
+            <input type="tel" id="phoneNumber"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your phone number">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Year</label>
+            <select id="year"
+              class="dropdown-custom w-full border border-gray-300 rounded-lg pl-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="">Select Year</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Interested Learning Circle</label>
+            <div class="border border-gray-300 rounded-lg p-3 bg-white max-h-32 overflow-y-auto">
+              <div class="space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer" data-circle="no-code">
+                  <input type="checkbox" class="checkbox-custom learning-circle-checkbox" value="No-code/low-code">
+                  <span class="text-sm text-gray-700">No-code/low-code</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer" data-circle="cyber-security">
+                  <input type="checkbox" class="checkbox-custom learning-circle-checkbox" value="Cyber Security">
+                  <span class="text-sm text-gray-700">Cyber Security</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer" data-circle="web-dev">
+                  <input type="checkbox" class="checkbox-custom learning-circle-checkbox" value="Web Development">
+                  <span class="text-sm text-gray-700">Web Development</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer" data-circle="ai">
+                  <input type="checkbox" class="checkbox-custom learning-circle-checkbox" value="AI">
+                  <span class="text-sm text-gray-700">AI</span>
+                </label>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Select the learning circles you're interested in</p>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <button onclick="nextStep(1)"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors w-full">
+            Save & Continue
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step" id="step2">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Course Details</h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Course</label>
+            <select id="course"
+              class="dropdown-custom w-full border border-gray-300 rounded-lg pl-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="">Select Course</option>
+              <option value="Btech">Btech</option>
+              <option value="Mtech">Mtech</option>
+              <option value="BCA">BCA</option>
+              <option value="MCA">MCA</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Admission No</label>
+            <input type="text" id="admissionNo"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Admission No">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Specialization</label>
+            <div class="border border-gray-300 rounded-lg p-3 bg-white max-h-32 overflow-y-auto">
+              <div class="space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Integrated MCA">
+                  <span class="text-sm text-gray-700">Integrated MCA</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Computer Science">
+                  <span class="text-sm text-gray-700">Computer Science</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Regular MCA">
+                  <span class="text-sm text-gray-700">Regular MCA</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="BCA">
+                  <span class="text-sm text-gray-700">BCA</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Mechanical Engineering">
+                  <span class="text-sm text-gray-700">Mechanical Engineering</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Electrical Engineering">
+                  <span class="text-sm text-gray-700">Electrical Engineering</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Civil Engineering">
+                  <span class="text-sm text-gray-700">Civil Engineering</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="AI & Information Technology">
+                  <span class="text-sm text-gray-700">AI & Information Technology</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Food Technology">
+                  <span class="text-sm text-gray-700">Food Technology</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="specialization" class="checkbox-custom" value="Electronics & Communication">
+                  <span class="text-sm text-gray-700">Electronics & Communication</span>
+                </label>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Computer Science, Mechanical, Civil...</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 mt-8">
+          <button type="button" onclick="prevStep(2)"
+            class="bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-400 transition w-full">Back</button>
+          <button type="button" onclick="nextStep(2)"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors w-full">
+            Save & Continue
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step" id="step3">
+        <h2 class="text-xl font-semibold text-gray-800 mb-3">Mulearn Membership</h2>
+        <p class="mb-4">IF you are new to mulearn select level 1 and skip Muid (Mulearn ID) </p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Level</label>
+            <select id="level"
+              class="dropdown-custom w-full border border-gray-300 rounded-lg pl-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="">Select Level</option>
+              <option value="1st Level">1st Level</option>
+              <option value="2nd Level">2nd Level</option>
+              <option value="3rd Level">3rd Level</option>
+              <option value="4th Level">4th Level</option>
+              <option value="5th Level">5th Level</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-600 mb-2">Muid (Mulearn ID optional)</label>
+            <input type="text" id="muid"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your Mulearn ID">
+          </div>
+        </div>
+
+        <div class="space-y-3 mt-8">
+          <button type="button" onclick="prevStep(3)"
+            class="bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-400 transition w-full">Back</button>
+          <button type="button" onclick="nextStep(3)"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors w-full">
+            Save & Continue
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step" id="step4">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Final Details</h2>
+
+        <div class="space-y-4">
+          <h1 class="font-bold text-xl">Introducing Learning Circles</h1>
+          <p class="text-sm text-gray-600">
+            An informal mechanism for bringing together learners who are interested in the same topic from across different fields and disciplines. A fantastic way to spend a small amount of time learning about new things with a group of people with the same interests!
+          </p>
+          <ul class="list-disc pl-6 space-y-2 text-gray-900">
+  <li><span class="font-semibold">✅ Solve real-world problems</span> through collaborative, open product building.</li>
+  <li><span class="font-semibold">✅ Learn together</span> – gain hands-on experience and share knowledge with the community.</li>
+  <li><span class="font-semibold">✅ Shape the future</span> by turning ideas into action within a supportive group.</li>
+</ul>
+<p class="mt-4 text-green-600 font-semibold">
+  <span class="text-[#f78c40]">Example</span> This registration form itself was built as part of a <span class="text-[#f78c40]"> Learning Circle</span> – showing how we put our principles into practice!
+</p>
+
+
+        </div>
+
+        <div class="space-y-3 mt-8">
+          <button type="button" onclick="prevStep(4)"
+            class="bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-400 transition w-full">Back</button>
+          <button type="button" onclick="nextStep(4)"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors w-full">
+            Register
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step" id="step5">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Complete!</h2>
+        <div class="text-center py-4">
+          <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <p class="text-gray-600 mb-6">Registration completed successfully!</p>
+          
+          <!-- WhatsApp Groups Section -->
+          <div id="whatsappGroups" class="text-left">
+            <h3 class="font-semibold text-lg mb-4 text-center">Join Your Learning Circle WhatsApp Groups</h3>
+            <div id="whatsappLinks" class="space-y-2">
+              <!-- WhatsApp links will be populated here based on selected learning circles -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Registration data object
+let registrationData = {
+  personalInfo: {},
+  courseDetails: {},
+  mulearnInfo: {},
+  timestamp: null,
+  selectedLearningCircles: []
+};
+
+// WhatsApp group links for learning circles
+const whatsappGroups = {
+  "No-code/low-code": "https://chat.whatsapp.com/nocode-group-link",
+  "Cyber Security": "https://chat.whatsapp.com/cybersecurity-group-link",
+  "Web Development": "https://chat.whatsapp.com/webdev-group-link",
+  "AI": "https://chat.whatsapp.com/ai-group-link"
+};
+
+// Validation functions
+function validateEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function validatePhone(phone) {
+  const phoneRegex = /^[+]?[\d\s\-\(\)]{10,}$/;
+  return phoneRegex.test(phone.replace(/\s/g, ''));
+}
+
+function validateMUID(muid) {
+  // MUID should be alphanumeric and at least 6 characters
+  const muidRegex = /^@+$/;
+  return muidRegex.test(muid);
+}
+
+function showError(elementId, message) {
+  const element = document.getElementById(elementId);
+  const existingError = element.parentNode.querySelector('.error-message');
+  
+  // Remove existing error message
+  if (existingError) {
+    existingError.remove();
+  }
+  
+  // Add error styling
+  element.classList.add('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+  element.classList.remove('border-gray-300', 'focus:ring-blue-500', 'focus:border-blue-500');
+  
+  // Create and add error message
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error-message text-red-500 text-xs mt-1';
+  errorDiv.textContent = message;
+  element.parentNode.appendChild(errorDiv);
+}
+
+function clearError(elementId) {
+  const element = document.getElementById(elementId);
+  const existingError = element.parentNode.querySelector('.error-message');
+  
+  // Remove error message
+  if (existingError) {
+    existingError.remove();
+  }
+  
+  // Remove error styling
+  element.classList.remove('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+  element.classList.add('border-gray-300', 'focus:ring-blue-500', 'focus:border-blue-500');
+}
+
+function showFieldError(fieldName, message) {
+  // For radio button groups and checkboxes
+  const fieldContainer = document.querySelector(`[data-field="${fieldName}"]`) || 
+                        document.querySelector(`input[name="${fieldName}"]`)?.closest('.space-y-2')?.parentNode;
+  
+  if (fieldContainer) {
+    const existingError = fieldContainer.querySelector('.error-message');
+    if (existingError) {
+      existingError.remove();
+    }
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message text-red-500 text-xs mt-1';
+    errorDiv.textContent = message;
+    fieldContainer.appendChild(errorDiv);
+  }
+}
+
+function clearFieldError(fieldName) {
+  const fieldContainer = document.querySelector(`[data-field="${fieldName}"]`) || 
+                        document.querySelector(`input[name="${fieldName}"]`)?.closest('.space-y-2')?.parentNode;
+  
+  if (fieldContainer) {
+    const existingError = fieldContainer.querySelector('.error-message');
+    if (existingError) {
+      existingError.remove();
+    }
+  }
+}
+
+function validateStep1() {
+  let isValid = true;
+  
+  // Validate Full Name
+  const fullName = document.getElementById('fullName').value.trim();
+  if (!fullName) {
+    showError('fullName', 'Full name is required');
+    isValid = false;
+  } else if (fullName.length < 2) {
+    showError('fullName', 'Full name must be at least 2 characters');
+    isValid = false;
+  } else if (!/^[a-zA-Z\s]+$/.test(fullName)) {
+    showError('fullName', 'Full name should only contain letters and spaces');
+    isValid = false;
+  } else {
+    clearError('fullName');
+  }
+  
+  // Validate Phone Number
+  const phoneNumber = document.getElementById('phoneNumber').value.trim();
+  if (!phoneNumber) {
+    showError('phoneNumber', 'Phone number is required');
+    isValid = false;
+  } else if (!validatePhone(phoneNumber)) {
+    showError('phoneNumber', 'Please enter a valid phone number');
+    isValid = false;
+  } else {
+    clearError('phoneNumber');
+  }
+  
+  // Validate Year
+  const year = document.getElementById('year').value;
+  if (!year) {
+    showError('year', 'Please select your year');
+    isValid = false;
+  } else {
+    clearError('year');
+  }
+  
+  // Validate Learning Circles (at least one should be selected)
+  const selectedCircles = document.querySelectorAll('.learning-circle-checkbox:checked');
+  if (selectedCircles.length === 0) {
+    showFieldError('learning-circles', 'Please select at least one learning circle');
+    isValid = false;
+  } else {
+    clearFieldError('learning-circles');
+  }
+  
+  return isValid;
+}
+
+function validateStep2() {
+  let isValid = true;
+  
+  // Validate Course
+  const course = document.getElementById('course').value;
+  if (!course) {
+    showError('course', 'Please select your course');
+    isValid = false;
+  } else {
+    clearError('course');
+  }
+  
+  // Validate Admission Number
+  const admissionNo = document.getElementById('admissionNo').value.trim();
+  if (!admissionNo) {
+    showError('admissionNo', 'Admission number is required');
+    isValid = false;
+  } else if (admissionNo.length < 3) {
+    showError('admissionNo', 'Please enter a valid admission number');
+    isValid = false;
+  } else {
+    clearError('admissionNo');
+  }
+  
+  // Validate Specialization
+  const selectedSpecialization = document.querySelector('input[name="specialization"]:checked');
+  if (!selectedSpecialization) {
+    showFieldError('specialization', 'Please select your specialization');
+    isValid = false;
+  } else {
+    clearFieldError('specialization');
+  }
+  
+  return isValid;
+}
+
+function validateStep3() {
+  let isValid = true;
+  
+  // Validate Level
+  const level = document.getElementById('level').value;
+  if (!level) {
+    showError('level', 'Please select your level');
+    isValid = false;
+  } else {
+    clearError('level');
+  }
+  
+  // Validate MUID
+//   const muid = document.getElementById('muid').value.trim();
+//   if (!muid) {
+//     showError('muid', 'MUID is required');
+//     isValid = false;
+  
+//   } else {
+//     clearError('muid');
+//   }
+  
+  return isValid;
+}
+
+// Handle learning circle selection highlighting
+document.addEventListener('DOMContentLoaded', function() {
+  const learningCircleItems = document.querySelectorAll('.learning-circle-item');
+  
+  learningCircleItems.forEach(item => {
+    const checkbox = item.querySelector('.learning-circle-checkbox');
+    
+    checkbox.addEventListener('change', function() {
+      if (this.checked) {
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+      }
+      
+      // Clear validation error when user selects a learning circle
+      clearFieldError('learning-circles');
+    });
+  });
+  
+  // Add real-time validation listeners
+  addRealTimeValidation();
+});
+
+function addRealTimeValidation() {
+  // Real-time validation for Step 1
+  document.getElementById('fullName').addEventListener('blur', function() {
+    const fullName = this.value.trim();
+    if (fullName && (fullName.length < 2 || !/^[a-zA-Z\s]+$/.test(fullName))) {
+      if (fullName.length < 2) {
+        showError('fullName', 'Full name must be at least 2 characters');
+      } else {
+        showError('fullName', 'Full name should only contain letters and spaces');
+      }
+    } else if (fullName) {
+      clearError('fullName');
+    }
+  });
+  
+  document.getElementById('phoneNumber').addEventListener('blur', function() {
+    const phoneNumber = this.value.trim();
+    if (phoneNumber && !validatePhone(phoneNumber)) {
+      showError('phoneNumber', 'Please enter a valid phone number');
+    } else if (phoneNumber) {
+      clearError('phoneNumber');
+    }
+  });
+  
+  // Real-time validation for Step 2
+  document.getElementById('admissionNo').addEventListener('blur', function() {
+    const admissionNo = this.value.trim();
+    if (admissionNo && admissionNo.length < 3) {
+      showError('admissionNo', 'Please enter a valid admission number');
+    } else if (admissionNo) {
+      clearError('admissionNo');
+    }
+  });
+  
+  // Real-time validation for Step 3
+  document.getElementById('muid').addEventListener('blur', function() {
+    const muid = this.value.trim();
+    if (muid ) {
+      showError('muid', 'MUID should be at least 6 alphanumeric characters');
+    } else if (muid) {
+      clearError('muid');
+    }
+  });
+  
+  // Clear errors when user selects dropdown options
+  ['year', 'course', 'level'].forEach(id => {
+    document.getElementById(id).addEventListener('change', function() {
+      if (this.value) {
+        clearError(id);
+      }
+    });
+  });
+  
+  // Clear specialization error when user selects an option
+  document.querySelectorAll('input[name="specialization"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      clearFieldError('specialization');
+    });
+  });
+}
+
+function collectStepData(step) {
+  switch(step) {
+    case 1:
+      const selectedCircles = [];
+      document.querySelectorAll('.learning-circle-checkbox:checked').forEach(cb => {
+        selectedCircles.push(cb.value);
+      });
+      
+      registrationData.personalInfo = {
+        fullName: document.getElementById('fullName').value.trim(),
+        phoneNumber: document.getElementById('phoneNumber').value.trim(),
+        year: document.getElementById('year').value
+      };
+      registrationData.selectedLearningCircles = selectedCircles;
+      break;
+      
+    case 2:
+      const selectedSpecialization = document.querySelector('input[name="specialization"]:checked');
+      registrationData.courseDetails = {
+        course: document.getElementById('course').value,
+        admissionNo: document.getElementById('admissionNo').value.trim(),
+        specialization: selectedSpecialization ? selectedSpecialization.value : ''
+      };
+      break;
+      
+    case 3:
+      registrationData.mulearnInfo = {
+        level: document.getElementById('level').value,
+        muid: document.getElementById('muid').value.trim()
+      };
+      break;
+  }
+}
+
+function nextStep(current) {
+  // Validate current step before proceeding
+  let isValid = true;
+  
+  switch(current) {
+    case 1:
+      isValid = validateStep1();
+      break;
+    case 2:
+      isValid = validateStep2();
+      break;
+    case 3:
+      isValid = validateStep3();
+      break;
+  }
+  
+  if (!isValid) {
+    // Scroll to first error
+    const firstError = document.querySelector('.error-message');
+    if (firstError) {
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
+  
+  // Collect data from current step
+  collectStepData(current);
+  
+  // Hide current step
+  document.getElementById('step' + current).classList.remove('active');
+
+  // Show next step
+  const nextStepNum = current + 1;
+  if (nextStepNum <= 5) {
+    document.getElementById('step' + nextStepNum).classList.add('active');
+    
+    // If moving to step 5, save to Firebase and show WhatsApp groups
+    if (nextStepNum === 5) {
+      saveRegistration();
+      showWhatsAppGroups();
+    }
+  }
+
+  // Update progress tabs
+  updateTabs(nextStepNum);
+}
+
+function prevStep(current) {
+  // Hide current step
+  document.getElementById('step' + current).classList.remove('active');
+
+  // Show previous step
+  const prevStepNum = current - 1;
+  if (prevStepNum >= 1) {
+    document.getElementById('step' + prevStepNum).classList.add('active');
+  }
+
+  // Update progress tabs
+  updateTabs(prevStepNum);
+}
+
+function updateTabs(activeStep) {
+  // Reset all tabs
+  for (let i = 1; i <= 5; i++) {
+    const tab = document.getElementById('tab' + i);
+    if (i <= activeStep) {
+      tab.classList.remove('bg-gray-200', 'text-gray-500');
+      tab.classList.add('bg-emerald-500', 'text-white');
+    } else {
+      tab.classList.remove('bg-emerald-500', 'text-white');
+      tab.classList.add('bg-gray-200', 'text-gray-500');
+    }
+  }
+
+  // Update connecting lines
+  const lines = document.querySelectorAll('.progress-line');
+  lines.forEach((line, index) => {
+    if (index < activeStep - 1) {
+      line.classList.remove('bg-gray-200');
+      line.classList.add('bg-emerald-500');
+    } else {
+      line.classList.remove('bg-emerald-500');
+      line.classList.add('bg-gray-200');
+    }
+  });
+}
+
+async function saveRegistration() {
+  // Add timestamp
+  registrationData.timestamp = new Date().toISOString();
+  
+  console.log('Registration Data:', registrationData);
+  
+  // Save to Firebase (uncomment when Firebase is configured)
+  
+  try {
+    const success = await window.saveToFirebase(registrationData);
+    if (success) {
+      console.log('Data saved to Firebase successfully');
+    } else {
+      console.error('Failed to save to Firebase');
+      alert('Failed to save registration data. Please try again later.');
+    }
+  } catch (error) {
+    console.error('Error saving to Firebase:', error);
+     alert('Failed to save registration data. Please try again later.');
+  }
+ 
+  
+  // For now, just log the data (remove this when Firebase is working)
+  console.log('Registration data would be saved to Firebase:', JSON.stringify(registrationData, null, 2));
+}
+
+function showWhatsAppGroups() {
+  const whatsappLinksContainer = document.getElementById('whatsappLinks');
+  whatsappLinksContainer.innerHTML = '';
+  
+  // Show WhatsApp groups for selected learning circles
+  registrationData.selectedLearningCircles.forEach(circle => {
+    if (whatsappGroups[circle]) {
+      const linkElement = document.createElement('a');
+      linkElement.href = whatsappGroups[circle];
+      linkElement.target = '_blank';
+      linkElement.className = 'whatsapp-link';
+      linkElement.innerHTML = `
+        <svg class="whatsapp-icon" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+        </svg>
+        <div>
+          <div class="font-semibold">${circle}</div>
+          <div class="text-sm opacity-90">Join WhatsApp Group</div>
+        </div>
+      `;
+      whatsappLinksContainer.appendChild(linkElement);
+    }
+  });
+  
+  if (registrationData.selectedLearningCircles.length === 0) {
+    whatsappLinksContainer.innerHTML = '<p class="text-gray-500 text-center">No learning circles selected</p>';
+  }
+}
+  </script>
+
+</body>
+
+</html>
